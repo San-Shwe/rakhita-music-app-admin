@@ -10,8 +10,8 @@ const NotificationContext = createContext();
 
 export default function NotificationProvider({ children }) {
   const [notification, setNotification] = useState({
-    type: "warning",
-    value: "jp;a",
+    type: "",
+    value: "",
   });
   const [backgroundColor, setBackgroundColor] = useState("bg-red-500");
   const notificationRef = useRef();
@@ -20,21 +20,21 @@ export default function NotificationProvider({ children }) {
 
   let timeoutId;
   const updateNotification = (type, value) => {
-    if (timeoutId) return clearTimeout(timeoutId);
-
+    
     if (!type || !value) return;
+    if (timeoutId) clearTimeout(timeoutId);
     switch (type) {
       case "error":
-        setBackgroundColor("bg-red-4000");
+        setBackgroundColor("bg-red-400");
         break;
       case "warning":
-        setBackgroundColor("bg-orange-4000");
+        setBackgroundColor("bg-orange-400");
         break;
       case "success":
-        setBackgroundColor("bg-green-4000");
+        setBackgroundColor("bg-green-400");
         break;
       default:
-        setBackgroundColor("bg-red-4000");
+        setBackgroundColor("bg-red-400");
     }
 
     setNotification({ type, value });
@@ -47,6 +47,10 @@ export default function NotificationProvider({ children }) {
   useEffect(() => {
     notificationRef.current?.classList.remove("bottom-14", "opacity-0");
     notificationRef.current?.classList.add("bottom-10", "opacity-1");
+    // return () => {
+    //   notificationRef.current?.classList.add("bottom-14", "opacity-0");
+    //   notificationRef.current?.classList.remove("bottom-10", "opacity-1");
+    // }
   }, [notification.value]);
 
   return (
