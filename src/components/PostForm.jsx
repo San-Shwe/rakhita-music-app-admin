@@ -13,10 +13,10 @@ import MarkdownHints from "./MarkdownHints";
 export const defaultPost = {
   title: "",
   content: "",
-  thumbnail: "",
   featured: false,
   tags: "",
   meta: "",
+  slug: "",
 };
 
 const PostForm = ({ onSubmit, initialPost }) => {
@@ -26,7 +26,7 @@ const PostForm = ({ onSubmit, initialPost }) => {
   const [imageUploading, setImageUploading] = useState(false);
   const [displayMarkdownHint, setDisplayMarkdownHint] = useState(false);
 
-  const { title, content, thumbnail, featured, tags, meta } = postInfo;
+  const { title, content, featured, tags, meta } = postInfo;
 
   const { updateNotification } = useNotification();
 
@@ -37,13 +37,13 @@ const PostForm = ({ onSubmit, initialPost }) => {
   // form input sections handler
   const handleChange = ({ target }) => {
     const { value, name, checked } = target;
-
+    console.log(name);
     if (name === "thumbnail") {
       const file = target.files[0];
       if (!file.type?.includes("image")) {
         return updateNotification("error", "This is not an image!");
       }
-      setPostInfo({ ...postInfo, [thumbnail]: value });
+      setPostInfo({ ...postInfo, thumbnail: value });
       return setSelectedThumbnailUrl(URL.createObjectURL(file));
     }
 
@@ -56,7 +56,7 @@ const PostForm = ({ onSubmit, initialPost }) => {
     }
 
     if (name === "tags") {
-      const newTags = tags.split(", ");
+      const newTags = tags?.split(", ");
       if (newTags.length > 4)
         updateNotification("warning", "Only Four Tag Allow");
     }
@@ -66,6 +66,7 @@ const PostForm = ({ onSubmit, initialPost }) => {
     }
 
     const newPost = { ...postInfo, [name]: value };
+
     setPostInfo({ ...newPost }); // update current state info
     localStorage.setItem("blogPost", JSON.stringify(newPost));
   };
@@ -85,7 +86,7 @@ const PostForm = ({ onSubmit, initialPost }) => {
 
     const { error, image } = await uploadImage(formData);
     setImageUploading(false); // upload is complete
-    if (error) return console.log(error);
+    if (error) return updateNotification("image error", error);
     setImageUrlToCopy(image);
   };
 
@@ -123,8 +124,11 @@ const PostForm = ({ onSubmit, initialPost }) => {
     const finalPost = { ...postInfo, tags: JSON.stringify(newTags), slug };
     // contvert state data to form data to send backend api
     for (let key in finalPost) {
+      console.log(key + " -> " + finalPost[key]);
       formData.append(key, finalPost[key]);
     }
+
+    console.log("finalPost is ", finalPost);
 
     onSubmit(formData); // send data to it's parent component
   };

@@ -10,9 +10,8 @@ export default function CreatePost() {
   const navigate = useNavigate();
 
   const handleSubmit = async (data) => {
-    console.log(data);
     const { error, post } = await createPost(data);
-    if (error) return updateNotification("error", "error : " + error);
+    if (error) return updateNotification("error", "error is : " + error);
 
     navigate(`/update-post/${post.slug}`);
     return updateNotification("success", "Your Post is created");
@@ -27,5 +26,6 @@ export default function CreatePost() {
     const previousPost = JSON.parse(result);
     setPostInfo({ ...defaultPost, ...previousPost });
   }, []);
+
   return <PostForm onSubmit={handleSubmit} initialPost={postInfo} />;
 }
