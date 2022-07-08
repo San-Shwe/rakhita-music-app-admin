@@ -5,9 +5,15 @@ module.exports = {
     extend: {
       transitionProperty: {
         width: "width",
-        height: "height",
+        bottom: "bottom",
+      },
+      width: {
+        "device-width": "360px",
+      },
+      height: {
+        "device-height": "640px",
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };

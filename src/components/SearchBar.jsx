@@ -19,8 +19,7 @@ export default function SearchBar() {
   };
 
   const handleReset = (e) => {
-    if ((e.key = "Escape")) {
-      setQuery("");
+    if (e.key === "Escape") {
       resetSearch();
     }
   };

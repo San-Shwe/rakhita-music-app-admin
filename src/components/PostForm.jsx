@@ -8,6 +8,7 @@ import {
 } from "react-icons/im";
 import { uploadImage } from "../api/post";
 import { useNotification } from "../context/NotificationProvider";
+import DeviceView from "./DeviceView";
 import MarkdownHints from "./MarkdownHints";
 
 export const defaultPost = {
@@ -19,20 +20,33 @@ export const defaultPost = {
   slug: "",
 };
 
-const PostForm = ({ onSubmit, initialPost }) => {
+const PostForm = ({
+  onSubmit,
+  initialPost,
+  busy,
+  postBtnTitle,
+  resetAfterSubmit,
+}) => {
   const [postInfo, setPostInfo] = useState({ ...defaultPost });
   const [selectedThumbnailUrl, setSelectedThumbnailUrl] = useState("");
   const [imageUrlToCopy, setImageUrlToCopy] = useState("");
   const [imageUploading, setImageUploading] = useState(false);
   const [displayMarkdownHint, setDisplayMarkdownHint] = useState(false);
-
+  const [showDeviceView, setShowDeviceView] = useState(false);
   const { title, content, featured, tags, meta } = postInfo;
 
   const { updateNotification } = useNotification();
 
   useEffect(() => {
-    setPostInfo({ ...initialPost });
-  }, [initialPost]);
+    if (initialPost) {
+      setPostInfo({ ...initialPost });
+      setSelectedThumbnailUrl(initialPost?.thumbnail); // if initial post contain thumbnail
+    }
+    // cleanup function ||
+    return () => {
+      if (resetAfterSubmit) resetForm(); // if form posting is ok, we will change to default state
+    };
+  }, [initialPost, resetAfterSubmit]);
 
   // form input sections handler
   const handleChange = ({ target }) => {
@@ -43,7 +57,7 @@ const PostForm = ({ onSubmit, initialPost }) => {
       if (!file.type?.includes("image")) {
         return updateNotification("error", "This is not an image!");
       }
-      setPostInfo({ ...postInfo, thumbnail: value });
+      setPostInfo({ ...postInfo, thumbnail: file });
       return setSelectedThumbnailUrl(URL.createObjectURL(file));
     }
 
@@ -128,188 +142,209 @@ const PostForm = ({ onSubmit, initialPost }) => {
       formData.append(key, finalPost[key]);
     }
 
-    console.log("finalPost is ", finalPost);
-
     onSubmit(formData); // send data to it's parent component
   };
 
+  // reset form after posting is no problem
+  const resetForm = () => {
+    setPostInfo({ ...defaultPost });
+    localStorage.removeItem("blogPost");
+  };
+
   return (
-    <form className="space-x-2 flex flex-row" onSubmit={handleSubmit}>
-      {/* ---------------------------------------------------left section---------------------------------------------------- */}
-      <div className="w-9/12 h-screen space-y-3 flex flex-col">
-        <div className="flex items-center justify-between">
-          {/* Button Group Section */}
-          {/* i use button tab's type to button because form difine every button to it submit button */}
-          <h1 className="text-xl font-semibold text-gray-700">Create Post</h1>
-          <div className="flex items-center space-x-10">
-            <button
-              type="button"
-              className="flex justify-center items-center h-10 space-x-2 px-3 ring-1 ring-blue-500 rounded-md h text-blue-500 hover:text-white hover:bg-blue-500"
-            >
-              <ImSpinner11 />
-              <span>Reset</span>
-            </button>
-            <button
-              type="button"
-              className="flex justify-center items-center h-10 space-x-2 px-3 ring-1 ring-blue-500 rounded-md h text-blue-500 hover:text-white hover:bg-blue-500"
-            >
-              <ImEye />
-              <span>View</span>
-            </button>
-            <button className="flex justify-center items-center h-10 w-36 space-x-2 px-3 ring-1 rounded-md h text-white bg-blue-500 hover:text-blue-500 hover:bg-transparent">
-              Post
-            </button>
-          </div>
-        </div>
-        {/* Featured Checkbox */}
-        <div className="flex">
-          <input
-            name="featured"
-            value={featured}
-            onChange={handleChange}
-            type="checkbox"
-            id="featured"
-            hidden
-          />
-          <label
-            htmlFor="featured"
-            className="flex items-center justify-start space-x-2 cursor-pointer select-none"
-          >
-            <div className="w-4 h-4 rounded-full border-2 border-blue-500 flex items-center justify-center">
-              {/* if featured is true, also true rounded chicle of radio button */}
-              {featured && (
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              )}
+    <>
+      <form className="space-x-2 flex flex-row" onSubmit={handleSubmit}>
+        {/* ---------------------------------------------------left section---------------------------------------------------- */}
+        <div className="w-9/12 h-screen space-y-3 flex flex-col">
+          <div className="flex items-center justify-between">
+            {/* Button Group Section */}
+            {/* i use button tab's type to button because form difine every button to it submit button */}
+            <h1 className="text-xl font-semibold text-gray-700">Create Post</h1>
+            <div className="flex items-center space-x-10">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="flex justify-center items-center h-10 space-x-2 px-3 ring-1 ring-blue-500 rounded-md h text-blue-500 hover:text-white hover:bg-blue-500"
+              >
+                <ImSpinner11 />
+                <span>Reset</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeviceView(true)}
+                className="flex justify-center items-center h-10 w-36 space-x-2 ring-1 ring-blue-500 rounded-md h text-blue-500 hover:text-white hover:bg-blue-500"
+              >
+                <ImEye />
+                <span>View</span>
+              </button>
+              <button className="flex justify-center items-center h-10 w-36 space-x-2 px-3 ring-1 rounded-md h text-white bg-blue-500 hover:text-blue-500 hover:bg-transparent">
+                {busy ? (
+                  <ImSpinner3 className="animate-spin mx-auto text-xl" />
+                ) : (
+                  postBtnTitle
+                )}
+              </button>
             </div>
-            <span className="text-gray-700 ">Featured</span>
-          </label>
-        </div>
-        {/* Title Input */}
-        <input
-          type="text"
-          value={title}
-          name="title"
-          onChange={handleChange}
-          onFocus={() => setDisplayMarkdownHint(false)}
-          className="text outline-none focus:ring-1 rounded p-2 w-full font-semibold"
-          placeholder="Post Title"
-        />
-        {/* Image Input Section */}
-        <div className="flex space-x-2">
-          <div>
+          </div>
+          {/* Featured Checkbox */}
+          <div className="flex">
             <input
-              onChange={handleImageUpload}
-              id="image-input"
-              type="file"
+              name="featured"
+              value={featured}
+              onChange={handleChange}
+              type="checkbox"
+              id="featured"
               hidden
             />
             <label
-              htmlFor="image-input"
-              className=" flex justify-left items-center space-x-2 px-3 ring-1 ring-blue-500 rounded h-10 text-gray-500 hover:text-white hover:bg-gray-500 transition cursor-pointer"
+              htmlFor="featured"
+              className="flex items-center justify-start space-x-2 cursor-pointer select-none"
             >
-              <span>Place Image</span>
-              {imageUploading ? (
-                <ImSpinner3 className="animate-spin" />
+              <div className="w-4 h-4 rounded-full border-2 border-blue-500 flex items-center justify-center">
+                {/* if featured is true, also true rounded chicle of radio button */}
+                {featured && (
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                )}
+              </div>
+              <span className="text-gray-700 ">Featured</span>
+            </label>
+          </div>
+          {/* Title Input */}
+          <input
+            type="text"
+            value={title}
+            name="title"
+            onChange={handleChange}
+            onFocus={() => setDisplayMarkdownHint(false)}
+            className="text outline-none focus:ring-1 rounded p-2 w-full font-semibold"
+            placeholder="Post Title"
+          />
+          {/* Image Input Section */}
+          <div className="flex space-x-2">
+            <div>
+              <input
+                onChange={handleImageUpload}
+                id="image-input"
+                type="file"
+                hidden
+              />
+              <label
+                htmlFor="image-input"
+                className=" flex justify-left items-center space-x-2 px-3 ring-1 ring-blue-500 rounded h-10 text-gray-500 hover:text-white hover:bg-gray-500 transition cursor-pointer"
+              >
+                <span>Place Image</span>
+                {imageUploading ? (
+                  <ImSpinner3 className="animate-spin" />
+                ) : (
+                  <ImFilePicture />
+                )}
+              </label>
+            </div>
+            {imageUrlToCopy && (
+              <div className="flex-1 flex justify-between self-stretch bg-gray-500 rounded">
+                <input
+                  type="text"
+                  value={imageUrlToCopy} // we have warning here
+                  className="bg-transparent px-2 w-full text-white"
+                  disabled
+                />
+                <button
+                  onClick={handleOnCopy}
+                  type="button"
+                  className="text-xs flex flex-col justify-center items-center bg-gray-700 self-stretch px-2 rounded text-white "
+                >
+                  <ImFileEmpty />
+                  <span>copy</span>
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Text Area Section */}
+          <textarea
+            value={content}
+            name="content"
+            onChange={handleChange}
+            onFocus={() => setDisplayMarkdownHint(true)}
+            placeholder="## You can write your here!"
+            className="resize-noneocus:ring-1 rounded p-2 w-full  outline-none flex-1 font-mono tracking-wide text-lg"
+          ></textarea>
+          {/* Tags Input section */}
+          <div>
+            <label className="text-gray-500" htmlFor="tags">
+              Tags
+            </label>
+            <input
+              value={tags}
+              name="tags"
+              type="text"
+              id="tags"
+              onChange={handleChange}
+              className="text outline-none focus:ring-1 rounded p-2 w-full"
+              placeholder="eg: blog, react, nodejs"
+            />
+          </div>
+          {/* Meta Input section */}
+          <div className="mb-12">
+            <label className="text-gray-500" htmlFor="meta">
+              Meta Description {meta?.length}/150
+            </label>
+            <textarea
+              value={meta}
+              name="meta"
+              type="text"
+              id="meta"
+              onChange={handleChange}
+              className="text outline-none focus:ring-1 rounded p-2 w-full"
+              placeholder="whrite your description here..."
+            ></textarea>
+          </div>
+        </div>
+        {/* ---------------------------------------------------right section---------------------------------------------------- */}
+        <div className="w-4/12 px-2 relative">
+          <h1 className="text-xl font-semibold text-gray-700 mb-2">
+            Thumbnail
+          </h1>
+          {/* thumbnail section  */}
+          <div>
+            <input
+              name="thumbnail"
+              id="thumbnail"
+              onChange={handleChange}
+              type="file"
+              hidden
+            />
+            <label htmlFor="thumbnail" className="cursor-pointer">
+              {/* show the thumbnail if user selected image from local file */}
+              {selectedThumbnailUrl ? (
+                <img
+                  src={selectedThumbnailUrl}
+                  className="shadow-sm rounded"
+                  alt=""
+                />
               ) : (
-                <ImFilePicture />
+                <div className="border border-dashed border-gray-500 aspect-video text-gray-500 flex flex-col justify-center items-center">
+                  <span>Select Thumbnail</span>
+                  <span className="text-xs">Recommended Size</span>
+                  <span className="text-xs">1280 * 720</span>
+                </div>
               )}
             </label>
           </div>
-          {imageUrlToCopy && (
-            <div className="flex-1 flex justify-between self-stretch bg-gray-500 rounded">
-              <input
-                type="text"
-                value={imageUrlToCopy} // we have warning here
-                className="bg-transparent px-2 w-full text-white"
-                disabled
-              />
-              <button
-                onClick={handleOnCopy}
-                type="button"
-                className="text-xs flex flex-col justify-center items-center bg-gray-700 self-stretch px-2 rounded text-white "
-              >
-                <ImFileEmpty />
-                <span>copy</span>
-              </button>
-            </div>
-          )}
-        </div>
-        {/* Text Area Section */}
-        <textarea
-          value={content}
-          name="content"
-          onChange={handleChange}
-          onFocus={() => setDisplayMarkdownHint(true)}
-          placeholder="## You can write your here!"
-          className="resize-noneocus:ring-1 rounded p-2 w-full  outline-none flex-1 font-mono tracking-wide text-lg"
-        ></textarea>
-        {/* Tags Input section */}
-        <div>
-          <label className="text-gray-500" htmlFor="tags">
-            Tags
-          </label>
-          <input
-            value={tags}
-            name="tags"
-            type="text"
-            id="tags"
-            onChange={handleChange}
-            className="text outline-none focus:ring-1 rounded p-2 w-full"
-            placeholder="eg: blog, react, nodejs"
-          />
-        </div>
-        {/* Meta Input section */}
-        <div className="mb-12">
-          <label className="text-gray-500" htmlFor="meta">
-            Meta Description {meta?.length}/150
-          </label>
-          <textarea
-            value={meta}
-            name="meta"
-            type="text"
-            id="meta"
-            onChange={handleChange}
-            className="text outline-none focus:ring-1 rounded p-2 w-full"
-            placeholder="whrite your description here..."
-          ></textarea>
-        </div>
-      </div>
-      {/* ---------------------------------------------------right section---------------------------------------------------- */}
-      <div className="w-4/12 px-2 relative">
-        <h1 className="text-xl font-semibold text-gray-700 mb-2">Thumbnail</h1>
-        {/* thumbnail section  */}
-        <div>
-          <input
-            name="thumbnail"
-            id="thumbnail"
-            onChange={handleChange}
-            type="file"
-            hidden
-          />
-          <label htmlFor="thumbnail" className="cursor-pointer">
-            {/* show the thumbnail if user selected image from local file */}
-            {selectedThumbnailUrl ? (
-              <img
-                src={selectedThumbnailUrl}
-                className="shadow-sm rounded"
-                alt=""
-              />
-            ) : (
-              <div className="border border-dashed border-gray-500 aspect-video text-gray-500 flex flex-col justify-center items-center">
-                <span>Select Thumbnail</span>
-                <span className="text-xs">Recommended Size</span>
-                <span className="text-xs">1280 * 720</span>
-              </div>
-            )}
-          </label>
-        </div>
 
-        {/* MARKDOWN section  */}
-        <div className="absolute top-1/2 -translate-y-1/2 ">
-          {displayMarkdownHint && <MarkdownHints />}
+          {/* MARKDOWN section  */}
+          <div className="absolute top-1/2 -translate-y-1/2 ">
+            {displayMarkdownHint && <MarkdownHints />}
+          </div>
         </div>
-      </div>
-    </form>
+      </form>
+      <DeviceView
+        title={title}
+        content={content}
+        thumbnail={selectedThumbnailUrl}
+        visible={showDeviceView}
+        onClose={() => setShowDeviceView(false)}
+      />
+    </>
   );
 };
 

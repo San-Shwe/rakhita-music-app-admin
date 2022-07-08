@@ -7,12 +7,17 @@ import { useNavigate } from "react-router-dom";
 export default function CreatePost() {
   const { updateNotification } = useNotification();
   const [postInfo, setPostInfo] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [resetAfterSubmit, setRestAfterSubmit] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (data) => {
+    setBusy(true);
     const { error, post } = await createPost(data);
+    setBusy(false);
     if (error) return updateNotification("error", "error is : " + error);
 
+    setRestAfterSubmit(true);
     navigate(`/update-post/${post.slug}`);
     return updateNotification("success", "Your Post is created");
   };
@@ -27,5 +32,13 @@ export default function CreatePost() {
     setPostInfo({ ...defaultPost, ...previousPost });
   }, []);
 
-  return <PostForm onSubmit={handleSubmit} initialPost={postInfo} />;
+  return (
+    <PostForm
+      onSubmit={handleSubmit}
+      initialPost={postInfo}
+      busy={busy}
+      postBtnTitle="Post"
+      resetAfterSubmit={resetAfterSubmit}
+    />
+  );
 }
