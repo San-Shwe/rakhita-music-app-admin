@@ -51,7 +51,6 @@ const PostForm = ({
   // form input sections handler
   const handleChange = ({ target }) => {
     const { value, name, checked } = target;
-    console.log(name);
     if (name === "thumbnail") {
       const file = target.files[0];
       if (!file.type?.includes("image")) {
@@ -66,6 +65,7 @@ const PostForm = ({
         "blogPost",
         JSON.stringify({ ...postInfo, featured: checked })
       );
+      // console.log("name is ", name, " is ", checked);
       return setPostInfo({ ...postInfo, [name]: checked });
     }
 
@@ -138,7 +138,7 @@ const PostForm = ({
     const finalPost = { ...postInfo, tags: JSON.stringify(newTags), slug };
     // contvert state data to form data to send backend api
     for (let key in finalPost) {
-      console.log(key + " -> " + finalPost[key]);
+      console.log("key -> ", key, " value -> ", finalPost[key]);
       formData.append(key, finalPost[key]);
     }
 
@@ -259,14 +259,14 @@ const PostForm = ({
               </div>
             )}
           </div>
-          {/* Text Area Section */}
+          {/* Text Area Section <content> */}
           <textarea
             value={content}
             name="content"
             onChange={handleChange}
             onFocus={() => setDisplayMarkdownHint(true)}
             placeholder="## You can write your here!"
-            className="resize-noneocus:ring-1 rounded p-2 w-full  outline-none flex-1 font-mono tracking-wide text-lg"
+            className="resize-noneocus:ring-1 rounded p-2 w-full  outline-none flex-1 font-mono tracking-wide text-md"
           ></textarea>
           {/* Tags Input section */}
           <div>

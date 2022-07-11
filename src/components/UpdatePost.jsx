@@ -4,6 +4,7 @@ import { getPost } from "../api/post";
 import PostForm from "./PostForm";
 import { useNotification } from "../context/NotificationProvider";
 import { updatePost } from "../api/post";
+import NotFound from "./NotFound";
 
 const UpdatePost = () => {
   const { slug } = useParams();
@@ -41,7 +42,7 @@ const UpdatePost = () => {
     fetchPost();
   }, []);
 
-  // if (notFound) return <NotForm />;
+  if (notFound) return <NotFound />;
 
   return (
     <PostForm

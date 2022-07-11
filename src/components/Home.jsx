@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { deletePost, getPosts } from "../api/post";
 import { useSearch } from "../context/SearchProvider";
 import CardPost from "./CardPost";
+import { useNotification } from "../context/NotificationProvider";
+
 let pageNo = 0;
 const POST_LIMIT = 6;
 
@@ -19,20 +21,24 @@ const Home = () => {
   const { searchResult } = useSearch();
   const [posts, setPosts] = useState([]);
   const [totalPostCount, setTotalPostCount] = useState([]);
+  const { updateNotification } = useNotification();
 
   const paginationCount = getPaginationCount(totalPostCount);
   const paginationArr = new Array(paginationCount).fill(" ");
 
+  // fetch post whenever we what to update or view
   const fetchPosts = async () => {
     const { error, posts, postCount } = await getPosts(pageNo, POST_LIMIT);
-    if (error) return console.log(error);
-    console.log(posts);
+    if (error) return updateNotification("error", error);
+
     setPosts(posts);
     setTotalPostCount(postCount);
   };
 
   useEffect(() => {
     fetchPosts();
+
+    // eslint-disable-next-line
   }, []);
 
   const fetchMorePosts = (index) => {
@@ -46,8 +52,9 @@ const Home = () => {
 
     const { error, message } = await deletePost(id);
 
-    if (error) return console.log(error);
-    console.log(message);
+    if (error) return updateNotification("error", error);
+
+    updateNotification("success", "Post deleted, ", message);
 
     const newPosts = posts.filter((p) => p.id !== id);
     setPosts(newPosts);
